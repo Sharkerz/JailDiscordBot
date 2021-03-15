@@ -23,7 +23,8 @@ async def on_message(message):
     if message.content.lower().startswith('jail'):
         list_word = str(message.content).split()
         author = message.author
-        print(author)
+        await message.channel.send(author)
+        await message.channel.send(author.name)
 
         if(len(list_word) == 1):
             await message.channel.send("commande pour mettre en prison: jail '@pseudo' 'temps en secondes'")
