@@ -41,8 +41,8 @@ async def on_message(message):
                 if (timeC == ""):
                     timeC = "60"
 
-                if(int(timeC) > 60):
-                    await message.channel.send("Sale fou c'est 60 secondes maximum")
+                if(int(timeC) > 1000):
+                    await message.channel.send("Sale fou c'est 1000 secondes maximum")
                     timeC = "60"
 
             else:
