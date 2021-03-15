@@ -22,7 +22,7 @@ async def on_message(message):
     #jail
     if message.content.lower().startswith('jail'):
         list_word = str(message.content).split()
-        author = message.author
+        author = message.author.name
 
         if(len(list_word) == 1):
             await message.channel.send("commande pour mettre en prison: jail '@pseudo' 'temps en secondes'")
@@ -42,7 +42,7 @@ async def on_message(message):
                 if (timeC == ""):
                     timeC = "60"
 
-                if author != "Sharker#8751":
+                if author != "Sharker":
                     if int(timeC) > 60:
                         await message.channel.send("Sale fou c'est 60 secondes maximum")
                         timeC = "60"
