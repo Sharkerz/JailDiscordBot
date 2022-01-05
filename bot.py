@@ -25,7 +25,6 @@ admin_users = [281126750619172874]
 async def on_ready():
     print("Bot en ligne...")
 
-
 @client.command()
 async def jailinfo(ctx):
     jail_info = f"+---------------+-----------------+\n|     Pseudo        | Temps restant |"
@@ -36,6 +35,11 @@ async def jailinfo(ctx):
 
 @client.command()
 async def jail(ctx, *args):
+    # Help command
+    if args[0] == "help":
+        await ctx.send(f"Commandes: \n - `!jail @user (time)` => Mettre en prison \n - `!unjail @user` => Sortir de prison \n - `!jailinfo` => Voir qui est en prison \n\n ℹ️ Temps maximum: {maximum_time_non_admin_jail} secondes")
+        return
+
     # Check arguments
     if len(args) != 2 or not args[1].isdigit():
         await ctx.send("commande pour mettre en prison: jail '@pseudo' 'temps en secondes'")
