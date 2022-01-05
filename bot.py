@@ -1,90 +1,114 @@
 # bot.py
 import os
 import time
-
 import discord
+
 from dotenv import load_dotenv
-from discord.utils import get
+from discord.ext import commands
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+client = commands.Bot(command_prefix="!")
+jailed = {}
 
-client = discord.Client()
+# Parameters
+maximum_time_non_admin_jail = 120
+vocal_channel_name = "prison"
+admin_users = [281126750619172874]
+
+
+##################
+#    COMMANDS    #
+##################
 
 @client.event
-async def on_message(message):
-    free = True
-
-    if message.author == client.user:
-     return
+async def on_ready():
+    print("Bot en ligne...")
 
 
-    #jail
-    if message.content.lower().startswith('jail'):
-        list_word = str(message.content).split()
-        author = message.author.name
+@client.command()
+async def jailinfo(ctx):
+    jail_info = f"+---------------+-----------------+\n|     Pseudo        | Temps restant |"
+    for user in jailed:
+        jail_info += f"\n+---------------+-----------------+\n|     {str(client.get_user(user)).split('#')[0]}       |            {jailed[user]}        |\n +---------------+----------------+"
+    await ctx.send(jail_info)
 
-        if(len(list_word) == 1):
-            await message.channel.send("commande pour mettre en prison: jail '@pseudo' 'temps en secondes'")
 
-        else:
-            # pseudo
-            user = list_word[1]
+@client.command()
+async def jail(ctx, *args):
+    # Check arguments
+    if len(args) != 2 or not args[1].isdigit():
+        await ctx.send("commande pour mettre en prison: jail '@pseudo' 'temps en secondes'")
+        return
 
-            # time en prison
-            if (len(list_word) == 3):
-                time_to_decrypt = list_word[2]
-                timeC = ""
+    # Get vocal channel
+    try:
+        channel = discord.utils.get(ctx.guild.channels, name=vocal_channel_name)
+        channel_id = channel.id
+        channel = client.get_channel(channel_id)
+    except Exception:
+        await ctx.send("⚠️ Le salon vocal prison n'existe pas")
+        return
 
-                for i in time_to_decrypt:
-                    if i.isdigit():
-                        timeC += i
-                if (timeC == ""):
-                    timeC = "60"
+    # Get user to jail
+    try:
+        member_id = ctx.message.mentions[0].id
+        member = await ctx.guild.fetch_member(member_id)
+    except Exception:
+        await ctx.channel.send("Utilisateur non trouvé")
+        return
 
-                if author != "Sharker":
-                    if int(timeC) > 60:
-                        await message.channel.send("Sale fou c'est 60 secondes maximum")
-                        timeC = "60"
+    # Restrict time
+    try:
+        jail_time = int(args[1])
+        if ctx.message.author.id not in admin_users and int(args[1]) > maximum_time_non_admin_jail:
+            await ctx.send(f"Temps maximum: 60 secondes")
+            jail_time = 60
+    except Exception:
+        jail_time = 60
 
-            else:
-                timeC = "60"
+    await ctx.send(f"{args[0]} est en prison pour {jail_time} secondes")
+    jailed[member_id] = jail_time
 
-            channel = discord.utils.get(message.guild.channels, name="prison")
-            channel_id = channel.id
-            channel = client.get_channel(channel_id)
-            try:
-                member_id = message.mentions[0].id
-                member = await message.guild.fetch_member(member_id)
-            except:
-                await message.channel.send("@ mieux bouffon")
+    # Jail
+    start_time = time.time()
+    timetowait = start_time + int(jail_time)
+
+    while start_time < timetowait:
+        try:
+            # Stop if the user is not in jail
+            if member_id not in jailed:
                 return
+            jailed[member_id] = int(timetowait - start_time)
+            await member.move_to(channel)
+            time.sleep(1)
+            start_time = time.time()
+        except:
+            pass
+    jailed.pop(member_id, None)
+    await ctx.send(f"{args[0]} n'est plus en prison")
 
-            await message.channel.send(user + " est en prison pour " + timeC + " secondes")
 
-            start = time.time()
-            timetowait = start + int(timeC)
+@client.command()
+async def unjail(ctx, *args):
+    # Check arguments
+    if len(args) != 1:
+        await ctx.send("commande pour sortir de prison: jail '@pseudo' 'temps en secondes'")
+        return
 
-            while start < timetowait:
-                try:
-                    await member.move_to(channel)
-                    time.sleep(1)
-                    start = time.time()
-                except:
-                    pass
-                # # unjail
-                # if message.content == 'unjail ':
-                #     list_word = str(message.content).split()
-                #
-                #     if (len(list_word) == 1):
-                #         await message.channel.send("commande pour sortir de prison: unjail '@pseudo'")
-                #
-                #     if(list_word[1] == user):
-                #         await message.channel.send(user + "n'est plus en prison")
-                #         break
+    # cancel if the user is in prison
+    if ctx.message.author.id in jailed:
+        await ctx.send("Refusé, tu es en prison")
+        return
 
-            await message.channel.send(user + "n'est plus en prison")
+    # Get user to unjail
+    try:
+        member_id = ctx.message.mentions[0].id
+    except Exception:
+        await ctx.channel.send("Utilisateur non trouvé")
+        return
 
+    jailed.pop(member_id, None)
+    await ctx.send(f"{args[0]} n'est plus en prison")
 
 client.run(TOKEN)
-
