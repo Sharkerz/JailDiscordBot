@@ -12,7 +12,7 @@ client = commands.Bot(command_prefix="!")
 jailed = {}
 
 # Parameters
-maximum_time_non_admin_jail = 120
+maximum_time_non_admin_jail = 1000
 vocal_channel_name = "prison"
 admin_users = [281126750619172874]
 
