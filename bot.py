@@ -1,13 +1,12 @@
-# bot.py
 import os
 import time
 import discord
 
-from dotenv import load_dotenv
 from discord.ext import commands
+from boto.s3.connection import S3Connection
 
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
+TOKEN = os.environ['DISCORD_TOKEN']
 client = commands.Bot(command_prefix="!")
 jailed = {}
 
@@ -65,11 +64,16 @@ async def jail(ctx, *args):
         await ctx.channel.send("Utilisateur non trouvé")
         return
 
+    # Check if the user is not already jailed
+    if member_id in jailed:
+        await ctx.channel.send(f"{args[1]} est deja en prison !")
+        return
+
     # Restrict time
     try:
         jail_time = int(args[1])
         if ctx.message.author.id not in admin_users and int(args[1]) > maximum_time_non_admin_jail:
-            await ctx.send(f"Temps maximum: 60 secondes")
+            await ctx.send(f"Temps maximum: {maximum_time_non_admin_jail} secondes")
             jail_time = 60
     except Exception:
         jail_time = 60
