@@ -28,7 +28,7 @@ async def on_ready():
 @client.command()
 async def jailinfo(ctx):
     if len(jailed) == 0:
-        jailinfo = "La prison est vide"
+        jail_info = "La prison est vide"
     else:
         jail_info = f"+---------------+-----------------+\n|     Pseudo        | Temps restant |"
         for user in jailed:
