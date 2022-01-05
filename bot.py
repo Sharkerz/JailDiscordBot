@@ -5,8 +5,6 @@ import discord
 from discord.ext import commands
 from boto.s3.connection import S3Connection
 
-s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
-TOKEN = os.environ['DISCORD_TOKEN']
 client = commands.Bot(command_prefix="!")
 jailed = {}
 
@@ -122,4 +120,4 @@ async def unjail(ctx, *args):
     jailed.pop(member_id, None)
     await ctx.send(f"{args[0]} n'est plus en prison")
 
-client.run(TOKEN)
+client.run(os.environ['DISCORD_TOKEN'])
