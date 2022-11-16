@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 from boto.s3.connection import S3Connection
 
-client = commands.Bot(command_prefix="!")
+client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 jailed = {}
 
 # Parameters
@@ -67,6 +67,9 @@ async def jail(ctx, *args):
         await ctx.channel.send(f"{args[1]} est deja en prison !")
         return
 
+    # Get channel where the user to jail was
+    old_channel = None if not member.voice else member.voice.channel
+
     # Restrict time
     try:
         jail_time = int(args[1])
@@ -77,7 +80,7 @@ async def jail(ctx, *args):
         jail_time = 60
 
     await ctx.send(f"{args[0]} est en prison pour {jail_time} secondes")
-    jailed[member_id] = jail_time
+    jailed[member_id] = {'time': jail_time, 'froma': 'from'}
 
     # Jail
     start_time = time.time()
@@ -88,14 +91,19 @@ async def jail(ctx, *args):
             # Stop if the user is not in jail
             if member_id not in jailed:
                 return
-            jailed[member_id] = int(timetowait - start_time)
+            jailed[member_id]['time'] = int(timetowait - start_time)
             await member.move_to(channel)
             time.sleep(1)
             start_time = time.time()
         except:
             pass
     jailed.pop(member_id, None)
-    await ctx.send(f"{args[0]} n'est plus en prison")
+
+    if old_channel is not None:
+        await member.move_to(client.get_channel(old_channel.id))
+        await ctx.send(f"{args[0]} n'est plus en prison    ➡️  retour dans le channel {old_channel}")
+    else:
+        await ctx.send(f"{args[0]} n'est plus en prison")
 
 
 @client.command()
@@ -119,5 +127,11 @@ async def unjail(ctx, *args):
 
     jailed.pop(member_id, None)
     await ctx.send(f"{args[0]} n'est plus en prison")
+
+# User not in jailed join the jail channel
+@client.event
+async def on_voice_state_update(member, before, after):
+    if after.channel.name == vocal_channel_name and member.id not in jailed:
+        await member.move_to(before.channel)
 
 client.run(os.environ['DISCORD_TOKEN'])
