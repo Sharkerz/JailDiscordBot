@@ -2,9 +2,11 @@ import os
 import time
 import discord
 
+from dotenv import load_dotenv
 from discord.ext import commands
 from boto.s3.connection import S3Connection
 
+load_dotenv()
 client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 jailed = {}
 
@@ -134,4 +136,4 @@ async def on_voice_state_update(member, before, after):
     if after.channel.name == vocal_channel_name and member.id not in jailed:
         await member.move_to(before.channel)
 
-client.run(os.environ['DISCORD_TOKEN'])
+client.run(os.getenv('DISCORD_TOKEN'))
